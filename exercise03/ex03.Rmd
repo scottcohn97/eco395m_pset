@@ -28,6 +28,7 @@ library(patchwork)
 library(ggmap)
 library(maps)
 library(mapdata)
+library(vip)
 ```
 
 ```{r}
@@ -89,10 +90,19 @@ read_data <- function(df) {
 
 ```{r ca_housing_import}
 green_build <- 
-  read_data("greenbuildings.csv") 
+  read_data("greenbuildings.csv")
 
-skim(housing)
+skim_without_charts(green_build) 
 ```
+
+We first can look at some summary statistics.
+
+```{r}
+# Occupancy rates by qtr 
+
+green_build %>% 
+```
+
 
 
 ## Predictive model building: California housing
