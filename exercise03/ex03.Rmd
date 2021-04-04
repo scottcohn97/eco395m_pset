@@ -82,7 +82,6 @@ The researchers wanted to find a way to get a lot of police unrelated to crime. 
 >*Below I am showing you "Table 4" from the researchers' paper. Just focus on the first column of the table. Can you describe the model being estimated here? What is the conclusion?*
 
 |                              | Coefficient |
-|                              | (Robust)    |
 |------------------------------|-------------|
 | High Alert x District 1      | -2.621**    |
 |                              | (.044)      |
@@ -94,9 +93,9 @@ The researchers wanted to find a way to get a lot of police unrelated to crime. 
 |                              | (4.211)     |
 
 The model being estimated here would look something like the following:
-$$
-  \texttt{Crime} = \beta_0 + \beta_1 \left(\texttt{High_Alert}\times \texttt{D}_1\right) + \beta_2 \left(\texttt{High_Alert}\times \texttt{D}_0\right) + \beta_3 \log(\texttt{midday_ridership}) + \varepsilon,
-$$
+
+$$\texttt{Crime} = \beta_0 + \beta_1 \left(\texttt{High_Alert}\times \texttt{D}_1\right) + \beta_2 \left(\texttt{High_Alert}\times \texttt{D}_0\right) + \beta_3 \log(\texttt{midday_ridership}) + \varepsilon,$$
+
 where $\texttt{D}_1$ represents District 1 and $\texttt{D}_0$ represents Other Districts. When there is a high alert, crime in District 1 go down by 2.6, controlling for ridership. High alert in other districts is associated with a small and not significant decline in crime. Since police presence in the "high alert" is localized around District 1, there is evidence that increasing police presence in DC decreases crime.
 
 ## Predictive model building: Green Certification
