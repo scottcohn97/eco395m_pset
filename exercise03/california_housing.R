@@ -307,9 +307,5 @@ knn_results %>%
   labs(x = "", y = "Logged median house value") + 
   theme_clean()
 
-# other model ----
-
-
-
 # session info -----
 sessionInfo()
