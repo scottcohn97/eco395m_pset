@@ -1,0 +1,17 @@
+# libs
+
+library(tidyverse)
+library(ggthemes)
+library(tictoc)
+library(kableExtra)
+library(modelsummary)
+library(skimr)
+library(estimatr)
+library(janitor)
+library(tidymodels)
+library(patchwork)
+library(arules)
+library(arulesViz)
+library(tm)
+# library(gamlr)
+library(SnowballC)

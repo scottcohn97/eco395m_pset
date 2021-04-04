@@ -1,0 +1,72 @@
+---
+title: "Exercise 04"
+author: "Scott Cohn"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      cache = TRUE,
+                      warning = FALSE, 
+                      message = FALSE)
+
+options(scipen = 999) 
+
+library(tidyverse)
+library(ggthemes)
+library(tictoc)
+library(kableExtra)
+library(modelsummary)
+library(skimr)
+library(estimatr)
+library(janitor)
+library(tidymodels)
+library(patchwork)
+library(arules)
+library(arulesViz)
+library(tm)
+# library(gamlr)
+library(SnowballC)
+```
+
+```{r}
+# funcs
+read_data <- function(df) {
+  #' read data from git url
+  #' INPUT: data set name
+  #' OUTPUT: dataframe
+  full_path <- paste("https://raw.githubusercontent.com/jgscott/ECO395M/master/data/", 
+                     df, sep = "")
+  df <- read_csv(full_path)
+  return(df)
+}
+```
+
+## Clustering and PCA
+
+## Market Segmentation
+
+## Association Rules for Grocery Purchases
+
+```{r}
+data("Groceries")
+
+rules <- apriori(Groceries, parameter = list(supp = 0.001, conf = 0.8, maxlen = 3)) # Min Support as 0.001, confidence as 0.8.
+
+plot(rules, engine = "ggplot") + theme_clean()
+
+plot(rules, method = "graph", control = list(type = "items"), engine = "igraph")
+
+```
+
+## Author Attribution
+
+## Session Information 
+
+```{r sysinfo}
+sessionInfo()
+```
+
