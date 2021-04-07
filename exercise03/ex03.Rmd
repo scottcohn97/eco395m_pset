@@ -471,6 +471,8 @@ last_fit(
   kbl(digits = 3, format = "pipe")
 ```
 
+The constructed models all take slightly differently approaches but converge (generally) on predictive accuracy. Across the tree-based model, the KNN-regression, and the penalized (LASSO) regression, none point to `green certification` being an important feature in determining rent price per square foot (See the VIP plots). It is, however, important to note that gas costs and electricity costs are hugely important and work counter to one another (positive and negative effect, respectively). Now, this may be a modeling problem. These covariates may be too correlated to effectively parse variation with green certified buildings. Since the energy certification certainly affects the value of these two parameters for the rental price in a calendar year, these models may contain endogeneity issues. Thought, I would argue that since these covariates are the most important in predicting price, the green certification is likely to matter with respect to price and that change emerges through variation in the gas and electricity costs.
+
 ## Predictive model building: California housing
 
 In this problem, we exploit census-tract level data on residential housing in California to build a predictive model for `medianHouseValue`.
