@@ -387,7 +387,7 @@ german_credit %>%
   group_by(history) %>%
   mutate(tot_default = sum(num_default),
          prob_default = (num_default / tot_default) * 100) %>%
-  filter(Default == 0) %>%
+  filter(Default == 1) %>%
   ggplot() +
   geom_col(aes(x = history, y = prob_default, 
              fill = history)) + 
@@ -557,7 +557,7 @@ cm <- log_results %>%
 cm
 ```
 
-This model is accurate 74.4 percent of the time. That's not ideal. The null model of assuming no one will default would be correct 70 percent of the time (given the 700/300 split). These data are likely not ideal for predicting, as previous credit history carries so much weight. I would recommend the bank get a more balance sample. See the following:
+This model is accurate 74.4 percent of the time. That's not ideal. The null model of assuming no one will default would be correct 70 percent of the time (given the 700/300 split). These data are likely not ideal for predicting, as previous credit history carries so much weight. I would recommend the bank get a more balanced sample where defaults do not lean so heavily on those with good credit. See the following:
 
 ```{r}
 german_credit %>% 
