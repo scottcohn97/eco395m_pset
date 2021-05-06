@@ -29,6 +29,7 @@ source('exercise04/libs_04.R', echo = T)
 data("Groceries")
 
 image(sample(Groceries, 100))
+dev.off() 
 
 frequent_items <- eclat(Groceries, parameter = list(supp = 0.07, maxlen = 15)) 
 
@@ -37,12 +38,12 @@ summary(frequent_items)
 
 rules <- apriori(Groceries, parameter = list(supp = 0.001, conf = 0.8, maxlen = 3)) # Min Support as 0.001, confidence as 0.8.
 
-# remove redundant rules
-subset_matrix <- is.subset(rules, rules)
-subset_matrix[lower.tri(subset_matrix, diag = T)] <- NA # not working
-redundant <- colSums(subset_matrix, na.rm = T) >= 1
-rules_pruned <- rules[!redundant]
-rules <- rules_pruned
+# remove redundant rules (not needed)
+# subset_matrix <- is.subset(rules, rules)
+# subset_matrix[lower.tri(subset_matrix, diag = T)] <- NA # not working
+# redundant <- colSums(subset_matrix, na.rm = T) >= 1
+# rules_pruned <- rules[!redundant]
+# rules <- rules_pruned
 
 summary(rules)
 plot(rules, engine = "ggplot") + theme_clean()
@@ -52,7 +53,7 @@ head(quality(rules)) %>% kbl(digits = 4, "pipe")
 
 arules::itemFrequencyPlot(
   Groceries,
-  topN = 20,
+  topN = 15,
   col = 'dodgerblue',
   main = 'Relative Item Frequency Plot',
   type = "relative",

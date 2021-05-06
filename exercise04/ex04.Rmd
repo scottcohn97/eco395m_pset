@@ -28,8 +28,14 @@ library(patchwork)
 library(arules)
 library(arulesViz)
 library(tm)
-# library(gamlr)
+library(wordcloud)
 library(SnowballC)
+library(LICORS)
+library(mosaic)
+library(pander)
+library(viridis)
+library(stargazer)
+library(ggcorrplot)
 ```
 
 ```{r}
@@ -47,20 +53,167 @@ read_data <- function(df) {
 
 ## Clustering and PCA
 
+We use k-means clustering  as our choice of clustering algorithm. We use two clusters. The table shows the averages for the features within the two clusters.
+
+Cluster 1
+```{r}
+set.seed(1234)
+
+wine <- read_data("wine.csv")
+X = wine[,-(12:13)]
+X = scale(X, center = TRUE, scale=TRUE)
+mu = attr(X,"scaled:center")
+sigma = attr(X,"scaled:scale")
+
+
+# Run k-means with 2 clusters and 50 starts
+clust1 = kmeanspp(X, 2, nstart=50)
+
+clust1$center[1,]*sigma + mu
+```
+
+Cluster 2 
+```{r}
+clust1$center[2,]*sigma + mu
+```
+
+
+To check whether the clustering algorithm is appropriately able to identify the colors, we check the means for the features grouped by color. They look very similar to the means calculated from our raw data and it looks like cluster 1 is red wine while cluster 2 is white wine. 
+
+
+```{r}
+table1 <- 
+  wine %>%
+  group_by(color) %>%
+  summarise(across(
+    .cols = where(is.numeric), 
+    .fns = list(Mean = mean), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+
+pander(table1,style = "grid")
+```
+
+Let's get a confusion matrix.
+
+```{r}
+wine <- wine %>% mutate(truth= ifelse(color == "red", 2, 1))
+
+confusion= table(truth=wine$truth, clust_pred= clust1$cluster)
+acc <- round(sum(diag(confusion)/sum(confusion))*100, 2)
+confusion
+print(paste("Our clustering algorithm has accuracy of ", acc, "%"), quote= F)
+```
+
+Let's now apply clustering to see if we can identify quality. Below is a heatmap of the correlations between all the properties. We see that quality is not particularly strongly related with any one chemical property. Density looks to be the most negatively correlated so we'll use that going forward.
+
+We use k-means clustering again. We use three clusters as we might want to think about the quality in terms of low, high and medium. 
+
+```{r}
+# looks a mess -- reorder the variables by hierarchical clustering
+ggcorrplot::ggcorrplot(cor(wine[, c(1:12)]), hc.order = TRUE)
+
+# Now run hierarchical clustering
+cluster1 = kmeanspp(X, 3, nstart=50)
+```
+
+The figure below plots density and quality by cluster. We do not see any particularly clear patterns emerge in term of quality as there looks to be a fair mix of different quality wines in all the clusters.However, we notice that cluster 1 could possibly have properties of high quality wine as we see less of cluster 2 and 3 making up a smaller proportion of the wines between the ranges of 7-9 
+
+```{r}
+qplot(wine$density, wine$quality, color= factor(cluster1$cluster), xlab = "Density", ylab= "Quality")+theme_bw()
+```
+
+We now apply PCA and use the first two components. Figure 2 below is a plot of the components colored by the wine color.
+
+```{r}
+pc_wine = prcomp(X)
+scores  = pc_wine$x
+qplot(scores[,1], scores[,2], color=wine$color, xlab='Component 1', ylab='Component 2') + theme_bw()
+```
+It looks like component 1 is able to identify the wine color pretty well. We see that the whites are clustered more towards the right and reds are clustered to the left.
+
+\newpage 
+Below is a graph of our two main principal components colored by quality.
+
+```{r, fig.width=11, fig.height=7}
+qplot(scores[,1], scores[,2], color= wine$quality, xlab='Component 1', ylab='Component 2') + scale_color_viridis() + theme_bw()
+```
+
+We see that while it's not particularly perfect and not as clear as the distinction for color, the components are also able to identify quality at some level. The higher quality wines look to be mainly around the bottom right. Indicating that component 1 weighs positively on quality while component 2 weighs negatively on it. To confirm, we regress quality on components 1 and 2 and the sign of our coefficients confirm this and we see that they are also statistically significant. 
+
+```{r, results= 'asis'}
+reg1 <- lm(formula = wine$quality ~ scores[, 1] + scores[, 2])
+stargazer(reg1, header = F, omit.stat = c("adj.rsq", "F"), covariate.labels = c("PC1", "PC2"))
+```
+
 ## Market Segmentation
 
 ## Association Rules for Grocery Purchases
 
+First we load the data.
+
 ```{r}
 data("Groceries")
+```
 
+We can examine the sparse matrix of transactions and items in a simple plot.
+
+```{r}
+image(sample(Groceries, 100))
+dev.off() 
+```
+
+What are the most frequent item purchases?
+
+```{r}
+frequent_items <- eclat(Groceries, parameter = list(supp = 0.07, maxlen = 15)) 
+
+summary(frequent_items)
+```
+
+Next, we use the `apriori` function, which implements the Apriori algorithm to mine frequent itemsets, to define rules for purchasing associations.  
+
+```{r}
 rules <- apriori(Groceries, parameter = list(supp = 0.001, conf = 0.8, maxlen = 3)) # Min Support as 0.001, confidence as 0.8.
 
+# remove redundant rules (not needed)
+# subset_matrix <- is.subset(rules, rules)
+# subset_matrix[lower.tri(subset_matrix, diag = T)] <- NA # not working
+# redundant <- colSums(subset_matrix, na.rm = T) >= 1
+# rules_pruned <- rules[!redundant]
+# rules <- rules_pruned
+
+summary(rules)
+```
+
+Some of the rules can be visualized.
+
+```{r}
 plot(rules, engine = "ggplot") + theme_clean()
+plot(rules, "scatterplot", engine = "ggplot") + theme_clean()
+plot(rules, "grouped", engine = "default") 
+head(quality(rules)) %>% kbl(digits = 4, "pipe")
+
+arules::itemFrequencyPlot(
+  Groceries,
+  topN = 15,
+  col = 'dodgerblue',
+  main = 'Relative Item Frequency Plot',
+  type = "relative",
+  ylab = "Item Frequency"
+  )
 
 plot(rules, method = "graph", control = list(type = "items"), engine = "igraph")
 
+plot(rules, method = "paracoord", control = list(type = "items"))
 ```
+
+From the visualizations and the summaries of item pairs, I recommend the following aisles:
+
+1. Groceries Aisle – Milk, Eggs and Vegetables
+2. Liquor Aisle – Liquor, Red/Blush Wine, Bottled Beer, Soda
+3. Eateries Aisle – Herbs, Tropical Fruits, Rolls/Buns, Fruit Juices, Jams
+4. Breakfast Aisle – Cereals, Yogurt, Rice, Curd
 
 ## Author Attribution
 
