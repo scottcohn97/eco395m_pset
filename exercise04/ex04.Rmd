@@ -1,6 +1,6 @@
 ---
 title: "Exercise 04"
-author: "Scott Cohn"
+author: "Scott Cohn, with Olekan Bello and Colin Wick"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output: github_document
 editor_options: 
