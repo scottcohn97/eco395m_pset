@@ -198,3 +198,19 @@ data_test_pred <- predict(data_classifier, data_test)
 CrossTable(data_test_pred, Data_test$author,
            prop.chisq = FALSE, prop.t = FALSE,
            dnn = c('predicted', 'actual'))
+
+final_df <- 
+  tibble(
+    "predicted" = data_test_pred,
+    "actual" = Data_test$author
+  )
+
+num_correct <- 
+  final_df %>% 
+  mutate(correct = if_else(predicted == actual, 1, 0)) %>%
+  pull(correct) %>%
+  sum()
+
+num_rows <- final_df %>% nrow()
+
+model_acc <- num_correct / num_rows
