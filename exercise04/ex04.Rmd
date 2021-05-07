@@ -1,6 +1,6 @@
 ---
 title: "Exercise 04"
-author: "Scott Cohn, with Olekan Bello and Colin Wick"
+author: "Scott Cohn, with Olalekan Bello and Colin Wick"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output: github_document
 editor_options: 
@@ -150,6 +150,79 @@ stargazer(reg1, header = F, omit.stat = c("adj.rsq", "F"), covariate.labels = c(
 ```
 
 ## Market Segmentation
+
+```{r}
+sm <- read_data("social_marketing.csv")
+sm %>% select(-X1,-chatter) %>%
+  colSums() %>% data.frame() %>% arrange(desc(`.`)) %>% head(10) %>%
+  rownames_to_column() %>%
+  rename("Topic" = 1,"Count"=2) %>%
+  kableExtra::kbl("pipe")
+top10 <- sm %>% select(-X1,-chatter) %>%
+  colSums() %>% data.frame() %>% arrange(desc(`.`)) %>% head(10) %>% rownames()
+```
+
+From here we see the beginnings of the market structure just by looking at aggregate mentions of each topic, but this is not a detailed marketing strategy. 
+
+```{r include=FALSE}
+sm_net <- sm %>%
+  pivot_longer(-X1) %>%
+  mutate(edge = ifelse(value != 0,1,0)) %>%
+  filter(edge != 0 & value > 5)%>% unique() %>% filter(name != "chatter") %>%
+  select(name,X1) %>% data.frame()
+sm_net_list = split(x = sm_net$name,f=sm_net$X) 
+sm_net_list <- as(sm_net_list,"transactions")
+topic_assoc = apriori(sm_net_list, 
+	parameter=list(support=.01, confidence=.5, maxlen=2),appearance = )
+```
+
+```{r}
+plot(head(topic_assoc, 25, by='lift'), method="graph" )
+```
+
+We removed the "chatter" category because everyone chatters now and then. Instead, we look at the likelihood of people to talk about a topic based on talking about another. The visualization above creates groups based on people's likely topics of conversation. Though most of these seem intuitive, the clear topic groupings. 
+
+The size of each node represents the amount of times it appeared in the data, meaning a higher share of the audience consistently talked about the topic. From this we see multiple clear segments; 
+
+1. An outdoorsy, personal health and fitness type consumer, likely to be marketed to via signage and retail placement.
+
+2. An online gaming college student consumer, likely to be marketed to on Twitch and other gaming-oriented social media sites.
+
+3. A beauty, cooking, fashion, and photo sharing consumer, likely marketed to on Instagram.
+
+4. Politics, news, travel, and automotive interested consumer, likely marketed to on Facebook and Twitter.
+
+5. The food, religion, parenting consumer, who may be more difficult to reach in a measured way due to the low relative concentration on any particular digital media. Grocery stores and traditional media would be likely places to build your brand.
+
+```{r}
+sm1 <- sm %>%
+  column_to_rownames("X1")
+sm_scl <- sm1 %>% scale(center=T,scale = T) 
+  mu = attr(sm_scl,"scaled:center")
+  sigma = attr(sm_scl,"scaled:scale")
+clust1 <- kmeanspp(sm_scl,k = 5)
+sm1$Total = rowSums(sm1)
+sm1$cluster <- clust1$cluster
+```
+
+```{r}
+sm1 %>% group_by(cluster) %>% summarize(colSums(sm1))
+colSums(sm1[sm1$cluster==1,])
+clusters <- data.frame(matrix(nrow=5,ncol=length(names(sm1))))
+clusters[1,] <- colSums(sm1[sm1$cluster==1,])
+clusters[2,] <- colSums(sm1[sm1$cluster==2,])
+clusters[3,] <- colSums(sm1[sm1$cluster==3,])
+clusters[4,] <- colSums(sm1[sm1$cluster==4,])
+clusters[5,] <- colSums(sm1[sm1$cluster==5,])
+names(clusters) <- names(sm1)
+cluster_vars <- data.frame(matrix(nrow=5,ncol=5))
+cluster_vars[,1] <- clusters %>% select(-Total,-chatter) %>% mutate(cluster = c(1:5)) %>% t() %>% data.frame() %>% arrange(desc(X1)) %>% head(5) %>% row.names()
+cluster_vars[,2] <- clusters %>% select(-Total,-chatter) %>% mutate(cluster = c(1:5)) %>% t() %>% data.frame() %>% arrange(desc(X2)) %>% head(5) %>% row.names()
+cluster_vars[,3] <- clusters %>% select(-Total,-chatter) %>% mutate(cluster = c(1:5)) %>% t() %>% data.frame() %>% arrange(desc(X3)) %>% head(5) %>% row.names()
+cluster_vars[,4] <- clusters %>% select(-Total,-chatter) %>% mutate(cluster = c(1:5)) %>% t() %>% data.frame() %>% arrange(desc(X4)) %>% head(5) %>% row.names()
+cluster_vars[,5] <- clusters %>% select(-Total,-chatter) %>% mutate(cluster = c(1:5)) %>% t() %>% data.frame() %>% arrange(desc(X5)) %>% head(5) %>% row.names()
+cluster_vars %>% kableExtra::kbl("pipe") 
+```
 
 ## Association Rules for Grocery Purchases
 
